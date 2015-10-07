@@ -98,18 +98,18 @@ function WebRPC(url, codec) {
       break;
 
     case REPLY:
-      var resolve = self.dispatch[event.ack];
+      var resolve = self.dispatch[message.ack];
       if (resolve) {
-        resolve.apply(self, event.data);
-        delete self.dispatch[event.ack];
+        resolve.apply(self, message.data);
+        delete self.dispatch[message.ack];
       }
       break;
 
     case EVENT:
-      var listeners = self.listenermap[event.name];
+      var listeners = self.listenermap[message.name];
       if (listeners) {
         for (var i = 0, len = listeners.length; i < len; i++) {
-          listeners[i].apply(self, event.data);
+          listeners[i].apply(self, message.data);
         }
       }
       break;
@@ -138,7 +138,7 @@ function WebRPC(url, codec) {
 }
 
 WebRPC.prototype.on = function on(name, listener) {
-  var listeners = self.listenermap[event.name];
+  var listeners = this.listenermap[name];
 
   if (!listeners) {
     listeners = [];
@@ -146,7 +146,7 @@ WebRPC.prototype.on = function on(name, listener) {
 
   listeners.push(listener);
 
-  self.listenermap[event.name] = listeners;
+  this.listenermap[name] = listeners;
 };
 
 WebRPC.prototype.emit = function emit() {
