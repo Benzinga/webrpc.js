@@ -1,0 +1,32 @@
+{
+  "name": "webrpc",
+  "version": "0.0.1",
+  "description": "A simple WebSocket-based RPC library.",
+  "main": "webrpc.js",
+  "scripts": {
+    "test": "mocha -R spec"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Benzinga/webrpc.js.git"
+  },
+  "keywords": [
+    "rpc",
+    "websocket",
+    "realtime"
+  ],
+  "author": "Benzinga",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Benzinga/webrpc.js/issues"
+  },
+  "homepage": "https://webrpc.io/",
+  "devDependencies": {
+    "chai": "^3.3.0",
+    "eslint": "^1.6.0",
+    "mocha": "^2.3.3"
+  },
+  "dependencies": {
+    "ws": "^0.8.0"
+  }
+}
