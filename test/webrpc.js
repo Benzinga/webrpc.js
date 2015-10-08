@@ -107,5 +107,15 @@ describe('WebRPC', function() {
         client.close();
       });
     });
+
+    it('should queue messages', function(done) {
+      var client = new WebRPC(url);
+
+      client.emit('hello');
+
+      client.on('hi', function conn() {
+        done();
+      });
+    });
   });
 });
