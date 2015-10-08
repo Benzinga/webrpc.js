@@ -1,6 +1,15 @@
 var expect = require('chai').expect;
 var WebRPC = require('..');
 var WebRPCServer = require('../server');
+var WebRPCConn = WebRPCServer.WebRPCConn;
+
+describe('WebRPCConn', function() {
+  describe('#constructor', function() {
+    it('should require new operator', function() {
+      expect(WebRPCConn).to.throw(Error);
+    });
+  });
+})
 
 describe('WebRPC', function() {
   var port = 13000 + 0|Math.random()*1000;
@@ -56,6 +65,20 @@ describe('WebRPC', function() {
           expect(value).to.be.equal('good');
           done();
         });
+      });
+    });
+
+    it('should stay connected after invalid messages', function(done) {
+      var client = new WebRPC(url);
+
+      client.on('connected', function conn() {
+        client._send(-1);
+        client._send(3);
+        client.emit('hello');
+      });
+
+      client.on('hi', function hi() {
+        done();
       });
     });
   });

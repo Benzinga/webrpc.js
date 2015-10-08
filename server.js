@@ -109,3 +109,4 @@ function WebRPCServer(options) {
 }
 
 module.exports = WebRPCServer;
+module.exports.WebRPCConn = WebRPCConn;
