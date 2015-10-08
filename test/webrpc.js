@@ -96,12 +96,12 @@ describe('WebRPC', function() {
       });
     });
 
-    it('should trigger server disconnect on close', function(done) {
+    it('should trigger client disconnect on close', function(done) {
       var client = new WebRPC(url);
 
       client.on('connected', function conn() {
         client.ondisconnect = function disconnectEvent() {
-          serverDisconnect = function finish() { done(); };
+          done();
         };
 
         client.close();
