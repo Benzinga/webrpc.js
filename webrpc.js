@@ -77,10 +77,15 @@ function WebRPC(url, codec) {
       self.ondisconnect(e);
     }
 
+    // Do not reconnect on normal close.
+    if (e.code === WebSocket.CLOSE_NORMAL) {
+      return;
+    }
+
     // Try reconnecting.
-    setTimeout(backoff, function tryConnect() {
+    setTimeout(function tryConnect() {
       self.ws = connect();
-    });
+    }, backoff);
 
     // Increase the reconnect backoff.
     backoff += BACKOFF_INCR;

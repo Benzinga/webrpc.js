@@ -99,13 +99,23 @@ describe('WebRPC', function() {
     it('should trigger client disconnect on close', function(done) {
       var client = new WebRPC(url);
 
-      client.on('connected', function conn() {
-        client.ondisconnect = function disconnectEvent() {
-          done();
-        };
+      client.ondisconnect = function disconnectEvent() {
+        client.ondisconnect = null;
+        done();
+      };
 
-        client.close();
-      });
+      client.close();
+    });
+
+    it('should trigger server disconnect on close', function(done) {
+      var client = new WebRPC(url);
+
+      serverDisconnect = function disconnectEvent() {
+        serverDisconnect = null;
+        done();
+      };
+
+      client.close();
     });
 
     it('should queue messages', function(done) {
