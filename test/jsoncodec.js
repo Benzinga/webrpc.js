@@ -1,5 +1,5 @@
 var expect = require('chai').expect;
-var JSONCodec = require('..').JSONCodec;
+var JSONCodec = require('../jsoncodec');
 
 describe('JSONCodec', function() {
   var codec = new JSONCodec();

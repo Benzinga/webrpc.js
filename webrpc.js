@@ -1,4 +1,5 @@
 var WebSocket = require('ws');
+var JSONCodec = require('./jsoncodec');
 
 var DEFAULT_BACKOFF = 1000;
 var MAX_BACKOFF = 30000;
@@ -155,27 +156,11 @@ WebRPC.prototype.emit = function emit() {
 
   if (isFunction(params[params.length - 1])) {
     var callback = params.pop();
-    this._send(EVENT, name, params, ++self.ack);
-    this.dispatch[self.ack] = callback;
+    this._send(EVENT, name, params, ++this.ack);
+    this.dispatch[this.ack] = callback;
   } else {
     this._send(EVENT, name, params, NO_ACK);
   }
 };
 
-// JSONCodec implements a JSON codec for WebRPC (the default.)
-function JSONCodec() {
-  if (!(this instanceof JSONCodec)) {
-    throw new Error('Please use the \'new\' operator.');
-  }
-}
-
-JSONCodec.prototype.encode = function jsonEncode(msg) {
-  return JSON.stringify(msg);
-};
-
-JSONCodec.prototype.decode = function jsonDecode(data) {
-  return JSON.parse(data);
-};
-
 module.exports = WebRPC;
-module.exports.JSONCodec = JSONCodec;
