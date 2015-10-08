@@ -4,6 +4,12 @@ var JSONCodec = require('..').JSONCodec;
 describe('JSONCodec', function() {
   var codec = new JSONCodec();
 
+  describe('#constructor', function() {
+    it('should require new operator', function() {
+      expect(JSONCodec).to.throw(Error);
+    });
+  });
+
   describe('#encode', function() {
     it('should encode proper JSON', function() {
       var msg = {
