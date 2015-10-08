@@ -9,7 +9,15 @@ describe('WebRPCConn', function() {
       expect(WebRPCConn).to.throw(Error);
     });
   });
-})
+});
+
+describe('WebRPCServer', function() {
+  describe('#constructor', function() {
+    it('should require new operator', function() {
+      expect(WebRPCServer).to.throw(Error);
+    });
+  });
+});
 
 describe('WebRPC', function() {
   var port = 13000 + 0|Math.random()*1000;
@@ -79,6 +87,19 @@ describe('WebRPC', function() {
 
       client.on('hi', function hi() {
         done();
+      });
+    });
+
+    it('should close cleanly', function(done) {
+      var client = new WebRPC(url);
+
+      client.on('connected', function conn() {
+        client.ondisconnect = function disconnectEvent() {
+          server.ondisconnect = null;
+          done();
+        };
+
+        client.close();
       });
     });
   });

@@ -163,4 +163,8 @@ WebRPC.prototype.emit = function emit() {
   }
 };
 
+WebRPC.prototype.close = function close() {
+  this.ws.close();
+};
+
 module.exports = WebRPC;
