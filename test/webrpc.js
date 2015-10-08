@@ -23,6 +23,7 @@ describe('WebRPC', function() {
   var port = 13000 + 0|Math.random()*1000;
   var url = "ws://localhost:" + port + "/";
   var server = new WebRPCServer({ port: port });
+  var serverDisconnect = null;
 
   server.onconnect = function connectEvent(ws) {
     ws.emit('connected');
@@ -32,6 +33,11 @@ describe('WebRPC', function() {
     ws.on('how are you?', function mood() {
       return 'good';
     });
+    ws.ondisconnect = function disconnectEvent() {
+      if (serverDisconnect) {
+        serverDisconnect();
+      }
+    };
   };
 
   describe('#constructor', function() {
@@ -90,13 +96,12 @@ describe('WebRPC', function() {
       });
     });
 
-    it('should close cleanly', function(done) {
+    it('should trigger server disconnect on close', function(done) {
       var client = new WebRPC(url);
 
       client.on('connected', function conn() {
         client.ondisconnect = function disconnectEvent() {
-          server.ondisconnect = null;
-          done();
+          serverDisconnect = function finish() { done(); };
         };
 
         client.close();
