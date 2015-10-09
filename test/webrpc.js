@@ -2,6 +2,7 @@ var expect = require('chai').expect;
 var WebRPC = require('..');
 var WebRPCServer = require('../server');
 var WebRPCConn = WebRPCServer.WebRPCConn;
+var lolex = require("lolex");
 
 describe('WebRPCConn', function() {
   describe('#constructor', function() {
@@ -49,22 +50,12 @@ describe('WebRPC', function() {
       var client = new WebRPC(url);
       client.onconnect = function conn() { done(); };
     });
+  });
 
+  describe('#on', function() {
     it('should receive messages', function(done) {
       var client = new WebRPC(url);
       client.on('connected', function conn() { done(); });
-    });
-
-    it('should send messages', function(done) {
-      var client = new WebRPC(url);
-
-      client.on('connected', function conn() {
-        client.emit('hello');
-      });
-
-      client.on('hi', function hi() {
-        done();
-      });
     });
 
     it('should receive reply', function(done) {
@@ -79,6 +70,20 @@ describe('WebRPC', function() {
           expect(value).to.be.equal('good');
           done();
         });
+      });
+    });
+  });
+
+  describe('#send', function() {
+    it('should send messages', function(done) {
+      var client = new WebRPC(url);
+
+      client.on('connected', function conn() {
+        client.emit('hello');
+      });
+
+      client.on('hi', function hi() {
+        done();
       });
     });
 
@@ -96,6 +101,18 @@ describe('WebRPC', function() {
       });
     });
 
+    it('should queue messages', function(done) {
+      var client = new WebRPC(url);
+
+      client.emit('hello');
+
+      client.on('hi', function conn() {
+        done();
+      });
+    });
+  });
+
+  describe('#close', function() {
     it('should trigger client disconnect on close', function(done) {
       var client = new WebRPC(url);
 
@@ -117,15 +134,28 @@ describe('WebRPC', function() {
 
       client.close();
     });
+  });
 
-    it('should queue messages', function(done) {
-      var client = new WebRPC(url);
+  it('should reconnect after 1000ms', function(done) {
+    var client = new WebRPC(url);
+    var clock = lolex.install();
 
-      client.emit('hello');
-
-      client.on('hi', function conn() {
+    client.ondisconnect = function disconnectEvent() {
+      client.onconnect = function connectEvent() {
         done();
+      };
+
+      // Since the timer is scheduled AFTER the disconnect event, we need to
+      // wait until next ev tick.
+      process.nextTick(function cb() {
+        clock.tick(1000);
       });
-    });
+    };
+
+    client.onconnect = function connectEvent() {
+      for (var i = 0, l = server.wss.clients.length; i < l; ++i) {
+        server.wss.clients[i].close(1001);
+      }
+    };
   });
 });

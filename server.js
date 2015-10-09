@@ -104,6 +104,9 @@ function WebRPCServer(options) {
 
   wss.on('connection', connectionEvent);
 
+  // Server
+  self.wss = wss;
+
   // Callbacks.
   self.onconnect = null;
 }
