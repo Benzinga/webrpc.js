@@ -4,6 +4,7 @@ var Promise = require('bluebird');
 
 var NO_ACK = 0;
 
+var INIT = 0;
 var EVENT = 1;
 var REPLY = 2;
 var PING = 3;
@@ -31,6 +32,10 @@ function WebRPCConn(ws) {
     var message = self.codec.decode(data);
 
     switch (message.type) {
+    case INIT:
+      // Reserved; not used for now.
+      break;
+
     case EVENT:
       var listener = self.listeners[message.name];
       if (listener) {
@@ -73,6 +78,9 @@ function WebRPCConn(ws) {
 
   // Expose send.
   self._send = send;
+
+  // Send init message. Currently not used.
+  send(INIT);
 }
 
 WebRPCConn.prototype.on = function on(name, listener) {

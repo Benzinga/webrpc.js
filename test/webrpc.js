@@ -2,7 +2,7 @@ var expect = require('chai').expect;
 var WebRPC = require('..');
 var WebRPCServer = require('../server');
 var WebRPCConn = WebRPCServer.WebRPCConn;
-var lolex = require("lolex");
+var lolex = require('lolex');
 
 describe('WebRPCConn', function() {
   describe('#constructor', function() {

@@ -5,6 +5,7 @@ var DEFAULT_BACKOFF = 1000;
 var MAX_BACKOFF = 30000;
 var BACKOFF_INCR = 2000;
 
+var INIT = 0;
 var EVENT = 1;
 var REPLY = 2;
 var PING = 3;
@@ -99,6 +100,13 @@ function WebRPC(url, codec) {
     var message = self.codec.decode(e.data);
 
     switch (message.type) {
+    case INIT:
+      // Reserved: this handler exists for allowing some handshake data in the
+      // future. As part of the transition, the client needs to support it,
+      // so that the server can safely expect a reply back.
+      send(INIT);
+      break;
+
     case PING:
       send(PONG);
       break;
