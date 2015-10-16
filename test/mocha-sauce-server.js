@@ -144,3 +144,5 @@ MochaSauce.prototype.start = function(fn) {
   });
   batch.end(fn);
 };
+
+module.exports = MochaSauce;

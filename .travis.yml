@@ -16,5 +16,5 @@ matrix:
 before_script:
   - npm install codecov.io istanbul
 script:
-  - "[[ $SAUCE = 1 ]] || { istanbul cover ./node_modules/mocha/bin/_mocha -- -R spec test/cases && cat ./coverage/coverage.json | ./node_modules/codecov.io/bin/codecov.io.js; }"
-  - "[[ $SAUCE = 1 ]] && { node ./test/server; }"
+  - "[[ -z $SAUCE ]] && { istanbul cover ./node_modules/mocha/bin/_mocha -- -R spec test/cases && cat ./coverage/coverage.json | ./node_modules/codecov.io/bin/codecov.io.js; } || echo 'Not running Node tests.'"
+  - "[[ $SAUCE ]] && { node ./test/server; } || echo 'Not running Sauce tests.'"
