@@ -90,6 +90,7 @@ describe('WebRPC', function() {
       client.close();
     });
 
+    /* Begin Node Only Test Cases *********************************************/
     if (window.inBrowser)
       return;
 
@@ -103,8 +104,10 @@ describe('WebRPC', function() {
 
       client.close();
     });
+    /* End Node Only Test Cases ***********************************************/
   });
 
+  /* Begin Node Only Test Cases ***********************************************/
   if (window.inBrowser)
     return;
 
@@ -130,4 +133,5 @@ describe('WebRPC', function() {
       }
     };
   });
+  /* End Node Only Test Cases *************************************************/
 });
