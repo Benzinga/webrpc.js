@@ -58,7 +58,7 @@ function sauceTest(fn) {
     username: process.env.SAUCE_USERNAME,
     accessKey: process.env.SAUCE_ACCESS_KEY,
     build: process.env.TRAVIS_BUILD_NUMBER,
-    tunnelIdentifier: process.env.TRAVIS_JOB_NUMBER,
+    tunnel: process.env.TRAVIS_JOB_NUMBER,
     url: "http://localhost:8080/"
   });
 
