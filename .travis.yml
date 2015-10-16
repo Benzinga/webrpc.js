@@ -16,5 +16,5 @@ matrix:
 before_script:
   - npm install codecov.io istanbul
 script:
-  - $SAUCE || { istanbul cover ./node_modules/mocha/bin/_mocha -- -R spec && cat ./coverage/coverage.json | ./node_modules/codecov.io/bin/codecov.io.js; }
-  - $SAUCE && { node ./test/server; }
+  - $SAUCE && { istanbul cover ./node_modules/mocha/bin/_mocha -- -R spec test/cases && cat ./coverage/coverage.json | ./node_modules/codecov.io/bin/codecov.io.js; }
+  - $SAUCE || { node ./test/server; }
