@@ -58,8 +58,8 @@ function sauceTest(fn) {
   sauceConnectLauncher({
     username: process.env.SAUCE_USERNAME,
     accessKey: process.env.SAUCE_ACCESS_KEY,
-    build: process.env.TRAVIS_BUILD_NUMBER,
-    tunnelIdentifier: process.env.TRAVIS_JOB_NUMBER
+    tunnelIdentifier: process.env.TRAVIS_JOB_NUMBER,
+    vmVersion: "dev-varnish"
   }, function (err, sauceConnectProcess) {
     if (err) {
       console.error(err.message);
