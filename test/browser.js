@@ -10,4 +10,4 @@ mocha.setup('bdd');
 function requireAll(r) { r.keys().forEach(r); }
 requireAll(require.context("./cases", true, /\.js$/));
 
-require('./mocha-sauce')();
+require('./mocha-sauce-client')();

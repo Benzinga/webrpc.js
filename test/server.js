@@ -51,13 +51,14 @@ function fileServe() {
 }
 
 function sauceTest(fn) {
-  var MochaSauce = eval("require('mocha-sauce')");
+  var MochaSauce = eval("require('./mocha-sauce-server')");
 
   var sauce = new MochaSauce({
     name: "webrpc.js",
     username: process.env.SAUCE_USERNAME,
     accessKey: process.env.SAUCE_ACCESS_KEY,
     build: process.env.TRAVIS_BUILD_NUMBER,
+    tunnelIdentifier: process.env.TRAVIS_JOB_NUMBER,
     url: "http://localhost:8080/"
   });
 
