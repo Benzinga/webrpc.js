@@ -51,35 +51,57 @@ function fileServe() {
 }
 
 function sauceTest(fn) {
+  var sauceConnectLauncher = eval("require('sauce-connect-launcher')");
   var MochaSauce = eval("require('./mocha-sauce-server')");
 
-  var sauce = new MochaSauce({
-    name: "webrpc.js",
+  // Open a sauce-connect connection.
+  sauceConnectLauncher({
     username: process.env.SAUCE_USERNAME,
     accessKey: process.env.SAUCE_ACCESS_KEY,
     build: process.env.TRAVIS_BUILD_NUMBER,
-    tunnel: process.env.TRAVIS_JOB_NUMBER,
-    url: "http://localhost:8080/"
+    tunnelIdentifier: process.env.TRAVIS_JOB_NUMBER
+  }, function (err, sauceConnectProcess) {
+    if (err) {
+      console.error(err.message);
+      return;
+    }
+    console.log("Sauce Connect ready");
+
+    var sauce = new MochaSauce({
+      name: "webrpc.js",
+      username: process.env.SAUCE_USERNAME,
+      accessKey: process.env.SAUCE_ACCESS_KEY,
+      build: process.env.TRAVIS_BUILD_NUMBER,
+      tunnel: process.env.TRAVIS_JOB_NUMBER,
+      url: "http://localhost:8080/"
+    });
+
+    // A simple browser matrix.
+    sauce.browser({ browserName: 'firefox', platform: 'Windows 7' });
+    sauce.browser({ browserName: 'chrome', platform: 'Windows 7' });
+    sauce.browser({ browserName: 'internet explorer', version: '10', platform: 'Windows 7' });
+    sauce.browser({ browserName: 'internet explorer', version: '11', platform: 'Windows 7' });
+
+    // Console output for debugging.
+    sauce.on('init', function(browser) {
+      console.log('  init : %s %s', browser.browserName, browser.platform);
+    });
+    sauce.on('start', function(browser) {
+      console.log('  start : %s %s', browser.browserName, browser.platform);
+    });
+    sauce.on('end', function(browser, res) {
+      console.log('  end : %s %s : %d failures', browser.browserName, browser.platform, res.failures);
+    });
+
+    // Run tests, close tunnel, run callback.
+    sauce.start(function() {
+      sauceConnectProcess.close(function () {
+        console.log("Closed Sauce Connect process");
+      });
+
+      if (fn) fn();
+    });
   });
-
-  sauce.browser({ browserName: 'firefox', platform: 'Windows 7' });
-  sauce.browser({ browserName: 'chrome', platform: 'Windows 7' });
-  sauce.browser({ browserName: 'internet explorer', version: '10', platform: 'Windows 7' });
-  sauce.browser({ browserName: 'internet explorer', version: '11', platform: 'Windows 7' });
-
-  sauce.on('init', function(browser) {
-    console.log('  init : %s %s', browser.browserName, browser.platform);
-  });
-
-  sauce.on('start', function(browser) {
-    console.log('  start : %s %s', browser.browserName, browser.platform);
-  });
-
-  sauce.on('end', function(browser, res) {
-    console.log('  end : %s %s : %d failures', browser.browserName, browser.platform, res.failures);
-  });
-
-  sauce.start(fn);
 }
 
 function harness() {
