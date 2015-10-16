@@ -119,5 +119,9 @@ function WebRPCServer(options) {
   self.onconnect = null;
 }
 
+WebRPCServer.prototype.close = function close() {
+  return this.wss.close();
+};
+
 module.exports = WebRPCServer;
 module.exports.WebRPCConn = WebRPCConn;

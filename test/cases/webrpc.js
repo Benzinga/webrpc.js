@@ -1,45 +1,11 @@
 var expect = require('chai').expect;
-var WebRPC = require('..');
-var WebRPCServer = require('../server');
-var WebRPCConn = WebRPCServer.WebRPCConn;
+var WebRPC = require('../..');
 var lolex = require('lolex');
 
-describe('WebRPCConn', function() {
-  describe('#constructor', function() {
-    it('should require new operator', function() {
-      expect(WebRPCConn).to.throw(Error);
-    });
-  });
-});
-
-describe('WebRPCServer', function() {
-  describe('#constructor', function() {
-    it('should require new operator', function() {
-      expect(WebRPCServer).to.throw(Error);
-    });
-  });
-});
+var window = typeof global ? global : window;
 
 describe('WebRPC', function() {
-  var port = 13000 + 0|Math.random()*1000;
-  var url = "ws://localhost:" + port + "/";
-  var server = new WebRPCServer({ port: port });
-  var serverDisconnect = null;
-
-  server.onconnect = function connectEvent(ws) {
-    ws.emit('connected');
-    ws.on('hello', function hello() {
-      ws.emit('hi');
-    });
-    ws.on('how are you?', function mood() {
-      return 'good';
-    });
-    ws.ondisconnect = function disconnectEvent() {
-      if (serverDisconnect) {
-        serverDisconnect();
-      }
-    };
-  };
+  var s = require('../server')();
 
   describe('#constructor', function() {
     it('should require new operator', function() {
@@ -47,19 +13,19 @@ describe('WebRPC', function() {
     });
 
     it('should connect to the server', function(done) {
-      var client = new WebRPC(url);
+      var client = new WebRPC(s.url);
       client.onconnect = function conn() { done(); };
     });
   });
 
   describe('#on', function() {
     it('should receive messages', function(done) {
-      var client = new WebRPC(url);
+      var client = new WebRPC(s.url);
       client.on('connected', function conn() { done(); });
     });
 
     it('should receive reply', function(done) {
-      var client = new WebRPC(url);
+      var client = new WebRPC(s.url);
 
       client.on('connected', function conn() {
         client.emit('hello');
@@ -76,7 +42,7 @@ describe('WebRPC', function() {
 
   describe('#send', function() {
     it('should send messages', function(done) {
-      var client = new WebRPC(url);
+      var client = new WebRPC(s.url);
 
       client.on('connected', function conn() {
         client.emit('hello');
@@ -88,7 +54,7 @@ describe('WebRPC', function() {
     });
 
     it('should stay connected after invalid messages', function(done) {
-      var client = new WebRPC(url);
+      var client = new WebRPC(s.url);
 
       client.on('connected', function conn() {
         client._send(-1);
@@ -102,7 +68,7 @@ describe('WebRPC', function() {
     });
 
     it('should queue messages', function(done) {
-      var client = new WebRPC(url);
+      var client = new WebRPC(s.url);
 
       client.emit('hello');
 
@@ -114,7 +80,7 @@ describe('WebRPC', function() {
 
   describe('#close', function() {
     it('should trigger client disconnect on close', function(done) {
-      var client = new WebRPC(url);
+      var client = new WebRPC(s.url);
 
       client.ondisconnect = function disconnectEvent() {
         client.ondisconnect = null;
@@ -124,11 +90,14 @@ describe('WebRPC', function() {
       client.close();
     });
 
-    it('should trigger server disconnect on close', function(done) {
-      var client = new WebRPC(url);
+    if (window.inBrowser)
+      return;
 
-      serverDisconnect = function disconnectEvent() {
-        serverDisconnect = null;
+    it('should trigger server disconnect on close', function(done) {
+      var client = new WebRPC(s.url);
+
+      s.serverDisconnect = function disconnectEvent() {
+        s.serverDisconnect = null;
         done();
       };
 
@@ -136,8 +105,11 @@ describe('WebRPC', function() {
     });
   });
 
+  if (window.inBrowser)
+    return;
+
   it('should reconnect after 1000ms', function(done) {
-    var client = new WebRPC(url);
+    var client = new WebRPC(s.url);
     var clock = lolex.install();
 
     client.ondisconnect = function disconnectEvent() {
@@ -153,8 +125,8 @@ describe('WebRPC', function() {
     };
 
     client.onconnect = function connectEvent() {
-      for (var i = 0, l = server.wss.clients.length; i < l; ++i) {
-        server.wss.clients[i].close(1001);
+      for (var i = 0, l = s.server.wss.clients.length; i < l; ++i) {
+        s.server.wss.clients[i].close(1001);
       }
     };
   });

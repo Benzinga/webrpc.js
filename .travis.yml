@@ -3,7 +3,18 @@ node_js:
   - "4.1"
   - "0.12"
   - "0.10"
+env:
+  global:
+    - secure: dybZ27R9YdB7JgWzjoya94fBpv5hKMYGr+qVSJZuPfj5oC/F6e6438wRsRe06E5oIwtHwM4kgezfJMZvw0wOfsFL6oheHlcn3uesRa/ZlPStj83ukPTWNtcX6JhHvCAhTuri7tSpZG4UghZ200ZV32rERAduiKEza1JXqAXysYAkEE2UqrrRYvVqcfvaHAJdyMdLhd1cx+bwK+zYHReAWHEzYKrPn1tWXrK8tQnNK2pnQHHh5+uyzjDhBzgy6TNTDFFyWiZC7AG4DSUWIWhFa+03TATnEBCtzz6as4iIAJw9HOBp8P3CrZkVNNTAs9+hj9R8jslxtHT86cPoORTOnngcFJH8qzajugf/LqfJkKF4gJlfu4IOkpgsUVLouMDOh9XLsvQaHoWVMpL9/ECI2Tal9i/XP5r+XLZd9xQlj2Druel7+ZTxsOb7tuRBCyRyqGyzLxTusetakezKLoo8AbOAsiIafBLf07ESeuMZkwz9nXQusvde5dOqYymP6ZS9jCb+BYSTXdraejCJyYw1xo1g+GZlHchNRPgG5nSqdDHnTrrPwWzOUCfQVsfVcpLfyV0KSiS9aM3vgdZk19FBvxmQ8VfeaELpGLoo71AZj1D1fvU5WCnXlQqG8sYUdzfMcd0EU8ij16lRYRpYfcJiJeepkuxNNFwtDVN/fwT9JMw=
+    - secure: TpkOFDKcl6/pmpNye5v6Gjomowvx8KRL2IzMIWz+uz2xGWwW4JY/XNf1oHEeaxlianl5SIN/MMeLr+FwWBbeNlTqIegcRQ6FWDzvrMqwIwSoCyS2dbvnnD7nl9gLh4p1aQQNgeJWWJHxXCKsJXBRMqVMtUWTKFKsClhbb1rh/yC4+0Mu0Sz9dLoASHR+rBGMRiVj+5cwn7EE7R+BY5C9W8BwGfYXbixVVD89RcrxD4aSJyEPrhjtQt+edy24ZZkLwaFtIFSq+7fNOVNzRAfsUpcQyhjsp2RekATp0Vwufy3d2XdS3tsquUPjI5sKm4zQ9LEv04ISv5QgOYoge9xUJ20o+p0XHmOP3gPzPzYmeXYwIUzO5IgWcgGp/iRqJIHxc4fjfm0bKYYKzo8A1E+ST6T2gUYgMuueeASKGe5cPuLuwZYWlTRlBVKMJp0WtUBUf5GMFXoJLydU/wLDvBtLRX8g0/BjEDUuJ4ztQWZxQo2EK0Zvsc/ixkYvI5YoCUCVeJaJcDUFa4HpxEIqRWw8k/5G9u/ndy/m/Smndj8NhStNraKxE6v6CX5fZt4SxbV2PIibx5+lsNVzZlM6O/8KU4G86v+zpknvwCBEa2qKQU86bFFVMbYHQFOLVoRQ97LvAZAdUpYe651FOAb/fCZjYwbQA5ui99CSzwQA7Fx8tiQ=
+addons:
+  sauce_connect: true
+matrix:
+  include:
+    - node_js: "4.1"
+      env: SAUCE=1
 before_script:
   - npm install codecov.io istanbul
 script:
-  - istanbul cover ./node_modules/mocha/bin/_mocha -- -R spec && cat ./coverage/coverage.json | ./node_modules/codecov.io/bin/codecov.io.js
+  - $SAUCE || { istanbul cover ./node_modules/mocha/bin/_mocha -- -R spec && cat ./coverage/coverage.json | ./node_modules/codecov.io/bin/codecov.io.js; }
+  - $SAUCE && { node ./test/server; }
