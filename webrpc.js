@@ -34,6 +34,7 @@ function WebRPC(url, codec) {
 
   function connect() {
     var ws = new WebSocket(url);
+    ws.binaryType = 'arraybuffer';
     ws.addEventListener('open', openEvent);
     ws.addEventListener('close', closeEvent);
     ws.addEventListener('message', messageEvent);
@@ -42,18 +43,20 @@ function WebRPC(url, codec) {
   }
 
   function send(type, name, data, ack) {
-    var event = self.codec.encode({
+    var v = self.codec.encode({
       type: type,
       name: name,
       data: data,
       ack: ack
     });
 
-    if (self.ws.readyState === 0) {
-      self.sendq.push(event);
-    } else {
-      self.ws.send(event);
-    }
+    Promise.resolve(v).then(function(event) {
+      if (self.ws.readyState === 0) {
+        self.sendq.push(event);
+      } else {
+        self.ws.send(event);
+      }
+    });
   }
 
   function openEvent(e) {
@@ -97,40 +100,42 @@ function WebRPC(url, codec) {
 
   function messageEvent(e) {
     // Decode message.
-    var message = self.codec.decode(e.data);
+    var v = self.codec.decode(e.data);
 
-    switch (message.type) {
-    case INIT:
-      // Reserved: this handler exists for allowing some handshake data in the
-      // future. As part of the transition, the client needs to support it,
-      // so that the server can safely expect a reply back.
-      send(INIT);
-      break;
+    Promise.resolve(v).then(function(message) {
+      switch (message.type) {
+      case INIT:
+        // Reserved: this handler exists for allowing some handshake data in the
+        // future. As part of the transition, the client needs to support it,
+        // so that the server can safely expect a reply back.
+        send(INIT);
+        break;
 
-    case PING:
-      send(PONG);
-      break;
+      case PING:
+        send(PONG);
+        break;
 
-    case REPLY:
-      var resolve = self.dispatch[message.ack];
-      if (resolve) {
-        resolve.apply(self, message.data);
-        delete self.dispatch[message.ack];
-      }
-      break;
-
-    case EVENT:
-      var listeners = self.listenermap[message.name];
-      if (listeners) {
-        for (var i = 0, len = listeners.length; i < len; i++) {
-          listeners[i].apply(self, message.data);
+      case REPLY:
+        var resolve = self.dispatch[message.ack];
+        if (resolve) {
+          resolve.apply(self, message.data);
+          delete self.dispatch[message.ack];
         }
-      }
-      break;
+        break;
 
-    default:
-      break;
-    }
+      case EVENT:
+        var listeners = self.listenermap[message.name];
+        if (listeners) {
+          for (var i = 0, len = listeners.length; i < len; i++) {
+            listeners[i].apply(self, message.data);
+          }
+        }
+        break;
+
+      default:
+        break;
+      }
+    });
   }
 
   // Connection state.
