@@ -1,5 +1,6 @@
 var WebSocket = require('ws');
 var JSONCodec = require('./jsoncodec');
+var Lz4Codec = require('./lz4codec');
 
 var DEFAULT_BACKOFF = 1000;
 var MAX_BACKOFF = 30000;
@@ -105,10 +106,17 @@ function WebRPC(url, codec) {
     Promise.resolve(v).then(function(message) {
       switch (message.type) {
       case INIT:
-        // Reserved: this handler exists for allowing some handshake data in the
-        // future. As part of the transition, the client needs to support it,
-        // so that the server can safely expect a reply back.
-        send(INIT);
+        var params = {};
+
+        if (message.data.lz4)
+          params.lz4 = true;
+
+        send(INIT, undefined, params);
+
+        // If Lz4 is enabled, wrap the codec with Lz4.
+        if (params.lz4) {
+          self.codec = new Lz4Codec(self.codec);
+        }
         break;
 
       case PING:
