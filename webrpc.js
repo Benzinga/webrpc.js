@@ -39,7 +39,7 @@ function WebRPC(url, codec) {
     ws.binaryType = 'arraybuffer';
     ws.addEventListener('open', openEvent);
     ws.addEventListener('close', closeEvent);
-    ws.addEventListener('message', initMessageEvent);
+    ws.onmessage = initMessageEvent;
 
     return ws;
   }
@@ -73,8 +73,7 @@ function WebRPC(url, codec) {
 
   function closeEvent(e) {
     // Reset the message handler.
-    self.ws.removeEventListener('message', messageEvent);
-    self.ws.addEventListener('message', initMessageEvent);
+    self.ws.onmessage = initMessageEvent;
 
     // Run ondisconnect handler.
     if (self.ondisconnect) {
@@ -99,8 +98,7 @@ function WebRPC(url, codec) {
   }
 
   function initMessageEvent(e) {
-    self.ws.removeEventListener('message', initMessageEvent);
-    self.ws.addEventListener('message', messageEvent);
+    self.ws.onmessage = messageEvent;
 
     // Decode message.
     var v = self.codec.decode(e.data);
