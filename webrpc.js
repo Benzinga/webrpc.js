@@ -1,6 +1,7 @@
 var WebSocket = require('ws');
 var JSONCodec = require('./jsoncodec');
 var Lz4Codec = require('./lz4codec');
+var Promise = require('bluebird');
 
 var DEFAULT_BACKOFF = 1000;
 var MAX_BACKOFF = 30000;
