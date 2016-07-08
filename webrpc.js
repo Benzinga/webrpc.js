@@ -5,6 +5,7 @@ var Lz4Codec = require('./lz4codec');
 var DEFAULT_BACKOFF = 1000;
 var MAX_BACKOFF = 30000;
 var BACKOFF_INCR = 2000;
+var INIT_DEADLINE = 10000;
 
 var INIT = 0;
 var EVENT = 1;
@@ -38,7 +39,7 @@ function WebRPC(url, codec) {
     ws.binaryType = 'arraybuffer';
     ws.addEventListener('open', openEvent);
     ws.addEventListener('close', closeEvent);
-    ws.addEventListener('message', messageEvent);
+    ws.addEventListener('message', initMessageEvent);
 
     return ws;
   }
@@ -51,7 +52,7 @@ function WebRPC(url, codec) {
       ack: ack
     });
 
-    Promise.resolve(v).then(function(event) {
+    return Promise.resolve(v).then(function(event) {
       if (self.ws.readyState === 0) {
         self.sendq.push(event);
       } else {
@@ -61,12 +62,6 @@ function WebRPC(url, codec) {
   }
 
   function openEvent(e) {
-    // Send queued events.
-    for (var i = 0, len = self.sendq.length; i < len; i++) {
-      self.ws.send(self.sendq[i]);
-    }
-    self.sendq = [];
-
     // Run onconnect handler.
     if (self.onconnect) {
       self.onconnect(e);
@@ -77,6 +72,10 @@ function WebRPC(url, codec) {
   }
 
   function closeEvent(e) {
+    // Reset the message handler.
+    self.ws.removeEventListener('message', messageEvent);
+    self.ws.addEventListener('message', initMessageEvent);
+
     // Run ondisconnect handler.
     if (self.ondisconnect) {
       self.ondisconnect(e);
@@ -99,6 +98,42 @@ function WebRPC(url, codec) {
     }
   }
 
+  function initMessageEvent(e) {
+    self.ws.removeEventListener('message', initMessageEvent);
+    self.ws.addEventListener('message', messageEvent);
+
+    // Decode message.
+    var v = self.codec.decode(e.data);
+
+    Promise.resolve(v).then(function(message) {
+      switch (message.type) {
+      case INIT:
+        var params = undefined;
+
+        if (message.data) {
+          params = {};
+
+          if (message.data && message.data.lz4)
+            params.lz4 = true;
+        }
+
+        send(INIT, undefined, params).then(function() {
+          // If Lz4 is enabled, wrap the codec with Lz4.
+          if (params && params.lz4)
+            self.codec = new Lz4Codec(self.codec);
+
+          // Send queued events.
+          for (var i = 0, len = self.sendq.length; i < len; i++)
+            self.ws.send(self.sendq[i]);
+          self.sendq = [];
+        });
+        break;
+      default:
+        console.log("unexpected message before init:", message);
+      }
+    });
+  }
+
   function messageEvent(e) {
     // Decode message.
     var v = self.codec.decode(e.data);
@@ -106,17 +141,7 @@ function WebRPC(url, codec) {
     Promise.resolve(v).then(function(message) {
       switch (message.type) {
       case INIT:
-        var params = {};
-
-        if (message.data.lz4)
-          params.lz4 = true;
-
-        send(INIT, undefined, params);
-
-        // If Lz4 is enabled, wrap the codec with Lz4.
-        if (params.lz4) {
-          self.codec = new Lz4Codec(self.codec);
-        }
+        console.log("spurious init message:", message);
         break;
 
       case PING:
