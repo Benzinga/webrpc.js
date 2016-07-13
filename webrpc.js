@@ -45,20 +45,21 @@ function WebRPC(url, codec) {
     return ws;
   }
 
-  function send(type, name, data, ack) {
-    var v = self.codec.encode({
+  function send(type, name, data, ack, force) {
+    var message = {
       type: type,
       name: name,
       data: data,
       ack: ack
-    });
+    };
 
-    return Promise.resolve(v).then(function(event) {
-      if (self.ws.readyState === 0) {
-        self.sendq.push(event);
-      } else {
-        self.ws.send(event);
-      }
+    if (!force && !self.ready) {
+      self.sendq.push(message);
+      return;
+    }
+
+    return Promise.resolve(self.codec.encode(message)).then(function(event) {
+      self.ws.send(event);
     });
   }
 
@@ -73,6 +74,9 @@ function WebRPC(url, codec) {
   }
 
   function closeEvent(e) {
+    // Clear ready flag.
+    self.ready = false;
+
     // Reset the message handler.
     self.ws.onmessage = initMessageEvent;
 
@@ -99,8 +103,6 @@ function WebRPC(url, codec) {
   }
 
   function initMessageEvent(e) {
-    self.ws.onmessage = messageEvent;
-
     // Decode message.
     var v = self.codec.decode(e.data);
 
@@ -116,19 +118,30 @@ function WebRPC(url, codec) {
             params.lz4 = true;
         }
 
-        send(INIT, undefined, params).then(function() {
+        send(INIT, undefined, params, undefined, true).then(function() {
           // If Lz4 is enabled, wrap the codec with Lz4.
           if (params && params.lz4)
             self.codec = new Lz4Codec(self.codec);
 
+          // Setup message handler.
+          self.ws.onmessage = messageEvent;
+
+          // Set ready flag.
+          self.ready = true;
+
+          // Process queued events.
+          for (var i = 0, len = self.recvq.length; i < len; i++)
+            messageEvent(self.recvq[i]);
+          self.recvq = [];
+
           // Send queued events.
-          for (var i = 0, len = self.sendq.length; i < len; i++)
-            self.ws.send(self.sendq[i]);
-          self.sendq = [];
+          Promise.mapSeries(self.sendq, function(message) {
+            return send(message.type, message.name, message.data, message.ack, true);
+          });
         });
         break;
       default:
-        console.log("unexpected message before init:", message);
+        self.recvq.push(e);
       }
     });
   }
@@ -174,9 +187,11 @@ function WebRPC(url, codec) {
   this.ws = connect();
   this.codec = codec || new JSONCodec();
   this.ack = 0;
+  this.ready = false;
 
   // RPC data.
-  this.sendq = [];      // List of queued messages.
+  this.sendq = [];      // List of queued messages to send.
+  this.recvq = [];      // List of queued messages to process.
   this.dispatch = {};   // Map of ack ID => dispatch function.
   this.listenermap = {};  // Map of event name => array of listener functions.
 

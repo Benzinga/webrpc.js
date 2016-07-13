@@ -1,5 +1,6 @@
 var utf8 = require('utf8js');
 var lz4 = require('lz4js');
+var Promise = require('bluebird');
 
 // Lz4Codec implements an Lz4 compression codec for WebRPC.
 function Lz4Codec(codec) {
@@ -11,17 +12,17 @@ function Lz4Codec(codec) {
 }
 
 Lz4Codec.prototype.encode = function lz4Encode(msg) {
-  var text = JSON.stringify(msg);
+  var text = Promise.resolve(this._codec.encode(msg));
 
-  return utf8.encode(text).then(function(data) {
+  return text.then(utf8.encode).then(function(data) {
     var lzdata = lz4.compress(data);
     var buf = new Uint8Array(lzdata.length + 4);
 
     // Write uncompressed length to output buffer.
-    buf[0] = (text.length >> 0) & 0xFF;
-    buf[1] = (text.length >> 8) & 0xFF;
-    buf[2] = (text.length >> 16) & 0xFF;
-    buf[3] = (text.length >> 24) & 0xFF;
+    buf[0] = (data.length >> 0) & 0xFF;
+    buf[1] = (data.length >> 8) & 0xFF;
+    buf[2] = (data.length >> 16) & 0xFF;
+    buf[3] = (data.length >> 24) & 0xFF;
 
     // Copy lzdata to output buffer.
     for (var i = 0; i < lzdata.length; i++) {
@@ -50,7 +51,7 @@ Lz4Codec.prototype.decode = function lz4Decode(buf) {
   // Uncompress.
   var data = lz4.uncompress(lzdata);
 
-  return utf8.decode(data);
+  return utf8.decode(data).then(this._codec.decode);
 };
 
 module.exports = Lz4Codec;

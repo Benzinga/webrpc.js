@@ -11,7 +11,7 @@ function serve() {
   if (window.inBrowser)
     return s;
 
-  s.server = new WebRPCServer({ port: s.port });
+  s.server = new WebRPCServer({ port: s.port, lz4: true });
   s.serverDisconnect = null;
 
   s.server.onconnect = function connectEvent(ws) {

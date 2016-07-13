@@ -53,6 +53,18 @@ describe('WebRPC', function() {
       });
     });
 
+    it('should queue messages', function(done) {
+      var client = new WebRPC(s.url);
+
+      client.debug = true;
+
+      client.emit('hello');
+
+      client.on('hi', function conn() {
+        done();
+      });
+    });
+
     it('should stay connected after invalid messages', function(done) {
       var client = new WebRPC(s.url);
 
@@ -63,16 +75,6 @@ describe('WebRPC', function() {
       });
 
       client.on('hi', function hi() {
-        done();
-      });
-    });
-
-    it('should queue messages', function(done) {
-      var client = new WebRPC(s.url);
-
-      client.emit('hello');
-
-      client.on('hi', function conn() {
         done();
       });
     });
