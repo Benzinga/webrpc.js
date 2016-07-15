@@ -7,17 +7,17 @@ var Lz4Codec = require('../../lz4codec');
 chai.use(chaiAsPromised);
 var expect = chai.expect;
 
-describe('Lz4Codec', function() {
+describe('Lz4Codec', function () {
   var codec = new Lz4Codec(new JsonCodec());
 
-  describe('#constructor', function() {
-    it('should require new operator', function() {
+  describe('#constructor', function () {
+    it('should require new operator', function () {
       expect(Lz4Codec).to.throw(Error);
     });
   });
 
-  describe('#encode', function() {
-    it('should encode proper Lz4', function() {
+  describe('#encode', function () {
+    it('should encode proper Lz4', function () {
       var msg = {
         type: 1,
         name: 'test',
@@ -26,20 +26,21 @@ describe('Lz4Codec', function() {
       };
 
       var data = new Uint8Array([
-         47,   0,   0,   0,   4,  34,  77,  24,  64, 112, 223,  47,
-          0,   0, 128, 123,  34, 116, 121, 112, 101,  34,  58,  49,
-         44,  34, 110,  97, 109, 101,  34,  58,  34, 116, 101, 115,
-        116,  34,  44,  34, 100,  97, 116,  97,  34,  58,  91,  49,
-         44,  50,  44,  51,  93,  44,  34,  97,  99, 107,  34,  58,
-         48, 125,   0,   0,   0,   0
+        0x04, 0x22, 0x4d, 0x18, 0x40, 0x70, 0xdf, 0x2f, 0x00,
+        0x00, 0x80, 0x7b, 0x22, 0x74, 0x79, 0x70, 0x65, 0x22,
+        0x3a, 0x31, 0x2c, 0x22, 0x6e, 0x61, 0x6d, 0x65, 0x22,
+        0x3a, 0x22, 0x74, 0x65, 0x73, 0x74, 0x22, 0x2c, 0x22,
+        0x64, 0x61, 0x74, 0x61, 0x22, 0x3a, 0x5b, 0x31, 0x2c,
+        0x32, 0x2c, 0x33, 0x5d, 0x2c, 0x22, 0x61, 0x63, 0x6b,
+        0x22, 0x3a, 0x30, 0x7d, 0x2f, 0x00, 0x00, 0x00
       ]);
 
       return expect(codec.encode(msg)).to.eventually.deep.equal(data);
     });
   });
 
-  describe('#decode', function() {
-    it('should decode Lz4', function() {
+  describe('#decode', function () {
+    it('should decode Lz4', function () {
       var msg = {
         type: 1,
         name: 'test',
@@ -48,12 +49,13 @@ describe('Lz4Codec', function() {
       };
 
       var data = new Uint8Array([
-         47,   0,   0,   0,   4,  34,  77,  24,  64, 112, 223,  47,
-          0,   0, 128, 123,  34, 116, 121, 112, 101,  34,  58,  49,
-         44,  34, 110,  97, 109, 101,  34,  58,  34, 116, 101, 115,
-        116,  34,  44,  34, 100,  97, 116,  97,  34,  58,  91,  49,
-         44,  50,  44,  51,  93,  44,  34,  97,  99, 107,  34,  58,
-         48, 125,   0,   0,   0,   0
+        0x04, 0x22, 0x4d, 0x18, 0x40, 0x70, 0xdf, 0x2f, 0x00,
+        0x00, 0x80, 0x7b, 0x22, 0x74, 0x79, 0x70, 0x65, 0x22,
+        0x3a, 0x31, 0x2c, 0x22, 0x6e, 0x61, 0x6d, 0x65, 0x22,
+        0x3a, 0x22, 0x74, 0x65, 0x73, 0x74, 0x22, 0x2c, 0x22,
+        0x64, 0x61, 0x74, 0x61, 0x22, 0x3a, 0x5b, 0x31, 0x2c,
+        0x32, 0x2c, 0x33, 0x5d, 0x2c, 0x22, 0x61, 0x63, 0x6b,
+        0x22, 0x3a, 0x30, 0x7d, 0x2f, 0x00, 0x00, 0x00
       ]);
 
       return expect(codec.decode(data)).to.eventually.deep.equal(msg);
