@@ -11,14 +11,14 @@ var REPLY = 2;
 var PING = 3;
 var PONG = 4;
 
-function WebRPCConn(ws, options) {
+function WebRPCConn (ws, options) {
   if (!(this instanceof WebRPCConn)) {
     throw new Error('Please use the \'new\' operator.');
   }
 
   var self = this;
 
-  function send(type, name, data, ack, force) {
+  function send (type, name, data, ack, force) {
     var message = {
       type: type,
       name: name,
@@ -31,13 +31,13 @@ function WebRPCConn(ws, options) {
       return Promise.resolve();
     }
 
-    return Promise.resolve(self.codec.encode(message)).then(function(event) {
+    return Promise.resolve(self.codec.encode(message)).then(function (event) {
       ws.send(event);
     });
   }
 
-  function initMessageEvent(e) {
-    Promise.resolve(self.codec.decode(e.data)).then(function(message) {
+  function initMessageEvent (e) {
+    Promise.resolve(self.codec.decode(e.data)).then(function (message) {
       if (message.type !== INIT) {
         return;
       }
@@ -51,40 +51,40 @@ function WebRPCConn(ws, options) {
       ws.onmessage = messageEvent;
 
       // Send queued messages.
-      Promise.mapSeries(self.sendq, function(message) {
+      Promise.mapSeries(self.sendq, function (message) {
         return send(message.type, message.name, message.data, message.ack, true);
       });
     });
   }
 
-  function messageEvent(e) {
-    Promise.resolve(self.codec.decode(e.data)).then(function(message) {
+  function messageEvent (e) {
+    Promise.resolve(self.codec.decode(e.data)).then(function (message) {
       switch (message.type) {
-      case EVENT:
-        var listener = self.listeners[message.name];
-        if (listener) {
-          if (message.ack !== NO_ACK) {
-            var ret = listener.apply(self, message.data);
-            Promise.resolve(ret).then(function then(value) {
-              send(REPLY, message.name, [value], message.ack);
-            });
-          } else {
-            listener.apply(self, message.data);
+        case EVENT:
+          var listener = self.listeners[message.name];
+          if (listener) {
+            if (message.ack !== NO_ACK) {
+              var ret = listener.apply(self, message.data);
+              Promise.resolve(ret).then(function then (value) {
+                send(REPLY, message.name, [value], message.ack);
+              });
+            } else {
+              listener.apply(self, message.data);
+            }
           }
-        }
-        break;
+          break;
 
-      case PING:
-        send(PONG);
-        break;
+        case PING:
+          send(PONG);
+          break;
 
-      default:
-        break;
+        default:
+          break;
       }
     });
   }
 
-  function disconnectEvent(e) {
+  function disconnectEvent (e) {
     if (self.ondisconnect) {
       self.ondisconnect(e);
     }
@@ -110,7 +110,7 @@ function WebRPCConn(ws, options) {
   var params = {};
 
   if (options && options.lz4 !== undefined) {
-    params.lz4 = options.lz4 == true;
+    params.lz4 = options.lz4 === true;
   } else {
     params.lz4 = true;
   }
@@ -119,18 +119,18 @@ function WebRPCConn(ws, options) {
   send(INIT, undefined, params, undefined, true);
 }
 
-WebRPCConn.prototype.on = function on(name, listener) {
+WebRPCConn.prototype.on = function on (name, listener) {
   this.listeners[name] = listener;
 };
 
-WebRPCConn.prototype.emit = function emit() {
+WebRPCConn.prototype.emit = function emit () {
   var name = arguments[0];
   var params = Array.prototype.splice.call(arguments, 1);
 
   this._send(EVENT, name, params, NO_ACK);
 };
 
-function WebRPCServer(options) {
+function WebRPCServer (options) {
   if (!(this instanceof WebRPCServer)) {
     throw new Error('Please use the \'new\' operator.');
   }
@@ -138,7 +138,7 @@ function WebRPCServer(options) {
   var self = this;
   var wss = new WebSocketServer(options);
 
-  function connectionEvent(ws) {
+  function connectionEvent (ws) {
     var conn = new WebRPCConn(ws, options);
 
     if (self.onconnect) {
@@ -155,7 +155,7 @@ function WebRPCServer(options) {
   self.onconnect = null;
 }
 
-WebRPCServer.prototype.close = function close() {
+WebRPCServer.prototype.close = function close () {
   return this.wss.close();
 };
 

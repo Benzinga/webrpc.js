@@ -6,7 +6,7 @@ var Promise = require('bluebird');
 var DEFAULT_BACKOFF = 1000;
 var MAX_BACKOFF = 30000;
 var BACKOFF_INCR = 2000;
-var INIT_DEADLINE = 10000;
+// var INIT_DEADLINE = 10000;
 
 var INIT = 0;
 var EVENT = 1;
@@ -17,17 +17,17 @@ var PONG = 4;
 var NO_ACK = 0;
 
 // isObject returns true if the provided value is an object. (From lodash.)
-function isObject(value) {
+function isObject (value) {
   return !!value && (typeof value === 'object' || typeof value === 'function');
 }
 
 // isFunction returns true if the provided value is a function.
-function isFunction(value) {
+function isFunction (value) {
   return isObject(value) && Object.prototype.toString.call(value) === '[object Function]';
 }
 
 // WebRPC implements the WebRPC client.
-function WebRPC(url, codec) {
+function WebRPC (url, codec) {
   if (!(this instanceof WebRPC)) {
     throw new Error('Please use the \'new\' operator.');
   }
@@ -35,7 +35,7 @@ function WebRPC(url, codec) {
   var self = this;
   var backoff = DEFAULT_BACKOFF;
 
-  function connect() {
+  function connect () {
     var ws = new WebSocket(url);
     ws.binaryType = 'arraybuffer';
     ws.addEventListener('open', openEvent);
@@ -45,7 +45,7 @@ function WebRPC(url, codec) {
     return ws;
   }
 
-  function send(type, name, data, ack, force) {
+  function send (type, name, data, ack, force) {
     var message = {
       type: type,
       name: name,
@@ -58,12 +58,12 @@ function WebRPC(url, codec) {
       return;
     }
 
-    return Promise.resolve(self.codec.encode(message)).then(function(event) {
+    return Promise.resolve(self.codec.encode(message)).then(function (event) {
       self.ws.send(event);
     });
   }
 
-  function openEvent(e) {
+  function openEvent (e) {
     // Run onconnect handler.
     if (self.onconnect) {
       self.onconnect(e);
@@ -73,7 +73,7 @@ function WebRPC(url, codec) {
     backoff = DEFAULT_BACKOFF;
   }
 
-  function closeEvent(e) {
+  function closeEvent (e) {
     // Clear ready flag.
     self.ready = false;
 
@@ -91,7 +91,7 @@ function WebRPC(url, codec) {
     }
 
     // Try reconnecting.
-    setTimeout(function tryConnect() {
+    setTimeout(function tryConnect () {
       self.ws = connect();
     }, backoff);
 
@@ -102,83 +102,83 @@ function WebRPC(url, codec) {
     }
   }
 
-  function initMessageEvent(e) {
+  function initMessageEvent (e) {
     // Decode message.
     var v = self.codec.decode(e.data);
 
-    Promise.resolve(v).then(function(message) {
+    Promise.resolve(v).then(function (message) {
       switch (message.type) {
-      case INIT:
-        var params = undefined;
+        case INIT:
+          var params;
 
-        if (message.data) {
-          params = {};
+          if (message.data) {
+            params = {};
 
-          if (message.data && message.data.lz4)
-            params.lz4 = true;
-        }
+            if (message.data && message.data.lz4) {
+              params.lz4 = true;
+            }
+          }
 
-        send(INIT, undefined, params, undefined, true).then(function() {
-          // If Lz4 is enabled, wrap the codec with Lz4.
-          if (params && params.lz4)
-            self.codec = new Lz4Codec(self.codec);
+          send(INIT, undefined, params, undefined, true).then(function () {
+            // If Lz4 is enabled, wrap the codec with Lz4.
+            if (params && params.lz4) {
+              self.codec = new Lz4Codec(self.codec);
+            }
 
-          // Setup message handler.
-          self.ws.onmessage = messageEvent;
+            // Setup message handler.
+            self.ws.onmessage = messageEvent;
 
-          // Set ready flag.
-          self.ready = true;
+            // Set ready flag.
+            self.ready = true;
 
-          // Process queued events.
-          for (var i = 0, len = self.recvq.length; i < len; i++)
-            messageEvent(self.recvq[i]);
-          self.recvq = [];
+            // Process queued events.
+            for (var i = 0, len = self.recvq.length; i < len; i++) {
+              messageEvent(self.recvq[i]);
+            }
 
-          // Send queued events.
-          Promise.mapSeries(self.sendq, function(message) {
-            return send(message.type, message.name, message.data, message.ack, true);
+            self.recvq = [];
+
+            // Send queued events.
+            Promise.mapSeries(self.sendq, function (message) {
+              return send(message.type, message.name, message.data, message.ack, true);
+            });
           });
-        });
-        break;
-      default:
-        self.recvq.push(e);
+          break;
+        default:
+          self.recvq.push(e);
       }
     });
   }
 
-  function messageEvent(e) {
+  function messageEvent (e) {
     // Decode message.
     var v = self.codec.decode(e.data);
 
-    Promise.resolve(v).then(function(message) {
+    Promise.resolve(v).then(function (message) {
       switch (message.type) {
-      case INIT:
-        console.log("spurious init message:", message);
-        break;
+        case PING:
+          send(PONG);
+          break;
 
-      case PING:
-        send(PONG);
-        break;
-
-      case REPLY:
-        var resolve = self.dispatch[message.ack];
-        if (resolve) {
-          resolve.apply(self, message.data);
-          delete self.dispatch[message.ack];
-        }
-        break;
-
-      case EVENT:
-        var listeners = self.listenermap[message.name];
-        if (listeners) {
-          for (var i = 0, len = listeners.length; i < len; i++) {
-            listeners[i].apply(self, message.data);
+        case REPLY:
+          var resolve = self.dispatch[message.ack];
+          if (resolve) {
+            resolve.apply(self, message.data);
+            delete self.dispatch[message.ack];
           }
-        }
-        break;
+          break;
 
-      default:
-        break;
+        case EVENT:
+          var listeners = self.listenermap[message.name];
+          if (listeners) {
+            for (var i = 0, len = listeners.length; i < len; i++) {
+              listeners[i].apply(self, message.data);
+            }
+          }
+          break;
+
+        default:
+          break;
       }
     });
   }
@@ -203,7 +203,7 @@ function WebRPC(url, codec) {
   this._send = send;
 }
 
-WebRPC.prototype.on = function on(name, listener) {
+WebRPC.prototype.on = function on (name, listener) {
   var listeners = this.listenermap[name];
 
   if (!listeners) {
@@ -215,7 +215,7 @@ WebRPC.prototype.on = function on(name, listener) {
   this.listenermap[name] = listeners;
 };
 
-WebRPC.prototype.emit = function emit() {
+WebRPC.prototype.emit = function emit () {
   var name = arguments[0];
   var params = Array.prototype.splice.call(arguments, 1);
 
@@ -228,7 +228,7 @@ WebRPC.prototype.emit = function emit() {
   }
 };
 
-WebRPC.prototype.close = function close() {
+WebRPC.prototype.close = function close () {
   this.ws.close();
 };
 

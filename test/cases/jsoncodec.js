@@ -2,17 +2,17 @@
 var expect = require('chai').expect;
 var JSONCodec = require('../../jsoncodec');
 
-describe('JSONCodec', function() {
+describe('JSONCodec', function () {
   var codec = new JSONCodec();
 
-  describe('#constructor', function() {
-    it('should require new operator', function() {
+  describe('#constructor', function () {
+    it('should require new operator', function () {
       expect(JSONCodec).to.throw(Error);
     });
   });
 
-  describe('#encode', function() {
-    it('should encode proper JSON', function() {
+  describe('#encode', function () {
+    it('should encode proper JSON', function () {
       var msg = {
         type: 1,
         name: 'test',
@@ -25,8 +25,8 @@ describe('JSONCodec', function() {
     });
   });
 
-  describe('#decode', function() {
-    it('should decode JSON', function() {
+  describe('#decode', function () {
+    it('should decode JSON', function () {
       var msg = {
         type: 1,
         name: 'test',
