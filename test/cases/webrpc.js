@@ -1,3 +1,4 @@
+/* eslint-env node, mocha */
 var expect = require('chai').expect;
 var WebRPC = require('../..');
 var lolex = require('lolex');
@@ -93,8 +94,9 @@ describe('WebRPC', function() {
     });
 
     /* Begin Node Only Test Cases *********************************************/
-    if (window.inBrowser)
+    if (window.inBrowser) {
       return;
+    }
 
     it('should trigger server disconnect on close', function(done) {
       var client = new WebRPC(s.url);
@@ -110,8 +112,9 @@ describe('WebRPC', function() {
   });
 
   /* Begin Node Only Test Cases ***********************************************/
-  if (window.inBrowser)
+  if (window.inBrowser) {
     return;
+  }
 
   it('should reconnect after 1000ms', function(done) {
     var client = new WebRPC(s.url);

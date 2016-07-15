@@ -1,5 +1,6 @@
+/* eslint-env node, mocha */
 var chai = require('chai');
-var chaiAsPromised = require("chai-as-promised");
+var chaiAsPromised = require('chai-as-promised');
 var JsonCodec = require('../../jsoncodec');
 var Lz4Codec = require('../../lz4codec');
 
@@ -7,7 +8,7 @@ chai.use(chaiAsPromised);
 var expect = chai.expect;
 
 describe('Lz4Codec', function() {
-  var codec = new Lz4Codec(new JsonCodec);
+  var codec = new Lz4Codec(new JsonCodec());
 
   describe('#constructor', function() {
     it('should require new operator', function() {

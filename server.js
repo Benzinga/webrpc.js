@@ -28,7 +28,7 @@ function WebRPCConn(ws, options) {
 
     if (!force && !self.ready) {
       self.sendq.push(message);
-      return;
+      return Promise.resolve();
     }
 
     return Promise.resolve(self.codec.encode(message)).then(function(event) {
@@ -38,24 +38,22 @@ function WebRPCConn(ws, options) {
 
   function initMessageEvent(e) {
     Promise.resolve(self.codec.decode(e.data)).then(function(message) {
-      switch (message.type) {
-      case INIT:
-        if (message.data && message.data.lz4) {
-          self.codec = new Lz4Codec(self.codec);
-        }
-
-        // Set ready flag.
-        self.ready = true;
-        ws.onmessage = messageEvent;
-
-        // Send queued messages.
-        Promise.mapSeries(self.sendq, function(message) {
-          return send(message.type, message.name, message.data, message.ack, true);
-        });
-        break;
-      default:
-        break;
+      if (message.type !== INIT) {
+        return;
       }
+
+      if (message.data && message.data.lz4) {
+        self.codec = new Lz4Codec(self.codec);
+      }
+
+      // Set ready flag.
+      self.ready = true;
+      ws.onmessage = messageEvent;
+
+      // Send queued messages.
+      Promise.mapSeries(self.sendq, function(message) {
+        return send(message.type, message.name, message.data, message.ack, true);
+      });
     });
   }
 
