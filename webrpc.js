@@ -176,8 +176,16 @@ WebRPC.prototype.emit = function emit() {
   }
 };
 
-WebRPC.prototype.close = function close() {
-  this.ws.close();
+WebRPC.prototype.close = function() {
+  if (!this.ws) return;
+
+  if (this.ws.readyState === 1) { // 1 = OPEN
+    this.ws.close();
+  } else {
+    // This will trigger the internal closeEvent automatically in 'ws' v8+
+    // No need to call this.ondisconnect() here anymore!
+    this.ws.terminate();
+  }
 };
 
 module.exports = WebRPC;
