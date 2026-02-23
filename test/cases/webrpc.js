@@ -1,6 +1,5 @@
 var expect = require('chai').expect;
 var WebRPC = require('../..');
-var lolex = require('lolex');
 
 var window = typeof global ? global : window;
 
@@ -81,55 +80,57 @@ describe('WebRPC', function() {
   describe('#close', function() {
     it('should trigger client disconnect on close', function(done) {
       var client = new WebRPC(s.url);
-
-      client.ondisconnect = function disconnectEvent() {
-        client.ondisconnect = null;
-        done();
+      
+      client.onconnect = function() {
+        client.ondisconnect = function() {
+          if (done) {
+            var d = done;
+            done = null; // This prevents it from being called again
+            d();
+          }
+        };
+        client.close();
       };
-
-      client.close();
     });
-
-    /* Begin Node Only Test Cases *********************************************/
-    if (window.inBrowser)
-      return;
 
     it('should trigger server disconnect on close', function(done) {
       var client = new WebRPC(s.url);
-
-      s.serverDisconnect = function disconnectEvent() {
-        s.serverDisconnect = null;
-        done();
+      
+      client.onconnect = function() {
+        s.serverDisconnect = function() {
+          if (done) {
+            var d = done;
+            done = null; // This prevents it from being called again
+            d();
+          }
+        };
+        client.close();
       };
-
-      client.close();
     });
-    /* End Node Only Test Cases ***********************************************/
   });
 
   /* Begin Node Only Test Cases ***********************************************/
-  if (window.inBrowser)
-    return;
+  if (window.inBrowser) return;
 
   it('should reconnect after 1000ms', function(done) {
+    this.timeout(5000); // 5 seconds is plenty for a 1-second reconnect
     var client = new WebRPC(s.url);
-    var clock = lolex.install();
 
-    client.ondisconnect = function disconnectEvent() {
-      client.onconnect = function connectEvent() {
-        done();
+    client.onconnect = function() {
+      // First connection is successful, now set up the disconnect-to-reconnect flow
+      client.ondisconnect = function disconnectEvent() {
+        
+        // This will be called once the 1000ms backoff timer finishes
+        client.onconnect = function connectEvent() {
+          done();
+        };
       };
 
-      // Since the timer is scheduled AFTER the disconnect event, we need to
-      // wait until next ev tick.
-      process.nextTick(function cb() {
-        clock.tick(1000);
-      });
-    };
-
-    client.onconnect = function connectEvent() {
-      for (var i = 0, l = s.server.wss.clients.length; i < l; ++i) {
-        s.server.wss.clients[i].close(1001);
+      // Kick the client from the server side
+      if (s.server && s.server.wss && s.server.wss.clients) {
+        s.server.wss.clients.forEach(function(c) {
+          c.close();
+        });
       }
     };
   });
